@@ -71,6 +71,7 @@ public extension PyWrap {
 		
 		public var functions: [Function]?
 		
+		public var callbacks: Callbacks?
 		public var ast: AST.ClassDef?
 		
 		public var properties: [any ClassProperty]?
@@ -78,6 +79,9 @@ public extension PyWrap {
 		public var options: PyWrap.ClassOptions
 		
 		public var overloads: [ClassOverLoads] = []
+		
+		public var new_class: Bool = false
+		
 		
 		init(ast: AST.ClassDef) {
 			self.ast = ast
@@ -128,6 +132,8 @@ public extension PyWrap {
 			properties = convertAST2Property(ast.body, cls: self)
 			overloads.append(contentsOf: getFunctionOverloads(functions: ast.body))
 			
+			
+			var bases: [ExprProtocol] { ast.bases }
 //			functions = ast.body.compactMap({ stmt in
 //				switch stmt.type {
 //				case .FunctionDef:
@@ -164,6 +170,7 @@ public extension PyWrap.Class {
 }
 
 public extension PyWrap {
+	
 	struct ClassOptions {
 		public var py_init = true
 		public var debug_mode = false

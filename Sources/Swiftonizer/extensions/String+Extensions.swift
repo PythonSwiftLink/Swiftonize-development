@@ -19,6 +19,11 @@ extension String {
 	}
 	
 	var expr: ExprSyntax { .init(stringLiteral: self) }
+	
+	var inheritedType: InheritedTypeSyntax {
+		//        InheritedTypeSyntax(typeName: SimpleTypeIdentifier(stringLiteral: self))
+		.init(type: SimpleTypeIdentifierSyntax(name: .identifier(self)))
+	}
 }
 
 
