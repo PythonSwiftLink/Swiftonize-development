@@ -6,9 +6,10 @@ import PyWrapper
 
 extension PyWrap.OptionalArg: ArgSyntax {
 	public func callTupleElement(many: Bool) -> SwiftSyntax.TupleExprElementSyntax {
-		switch type {
+		
+		switch type.wrapped {
 		case let other as PyWrap.OtherType:
-			fatalError()
+			return .pyUnpack(optional: self, many: many)
 		default:
 			return .optionalPyCast(arg: self, many: many)
 		}

@@ -1,5 +1,5 @@
 import Foundation
-import PyAstParser
+import PyAst
 
 
 public extension PyWrap {
@@ -29,6 +29,7 @@ public extension PyWrap {
 //		public init(type: any TypeProtocol) {
 //			wrapped = type
 //		}
+		public var string: String { "[\(lower.string):\(upper.string)]" }
 	}
 	
 }

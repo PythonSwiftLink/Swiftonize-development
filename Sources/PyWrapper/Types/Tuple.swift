@@ -1,10 +1,10 @@
 
 import Foundation
-import PyAstParser
+import PyAst
 
 
 import Foundation
-import PyAstParser
+import PyAst
 
 public protocol TupleTypeProtocol: TypeProtocol {
 	var types: [any TypeProtocol] {get}
@@ -68,5 +68,6 @@ extension Array where Element == any TypeProtocol {
 }
 extension PyWrap.TupleType: CustomStringConvertible {
 	public var description: String { "(\(self.types.tuple_description))"}
+	public var string: String { "(\(self.types.tuple_description))" }
 }
 

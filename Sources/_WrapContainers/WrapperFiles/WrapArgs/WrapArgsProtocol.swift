@@ -7,7 +7,7 @@
 
 import Foundation
 import PySwiftCore
-import PyAstParser
+import PyAst
 import SwiftSyntax
 import SwiftSyntaxBuilder
 

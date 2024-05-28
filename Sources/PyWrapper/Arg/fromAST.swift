@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import PyAstParser
+import PyAst
 import SwiftSyntax
 
 
@@ -189,7 +189,8 @@ extension AST.Subscript {
 		case .optional:
 			//return PyWrap.OptionalType(from: ast, type: .optional)
 			return PyWrap.OptionalArg(ast: ast_arg, type: PyWrap.OptionalType(from: ast, type: .optional))
-			
+		case .other:
+			return PyWrap.OtherArg(ast: ast_arg, type: .init(from: value, type: .other))
 		}
 	}
 	
@@ -213,6 +214,8 @@ extension AST.Subscript {
 			return PyWrap.DictionaryType(from: ast, type: .dict)
 		case .optional:
 			return PyWrap.OptionalType(from: ast, type: .optional)
+		case .other:
+			return PyWrap.OtherType(from: ast.slice as! AST.Name, type: .other)
 		}
 		
 		fatalError()
@@ -228,7 +231,7 @@ extension AST.Tuple {
 extension AST.Name {
 	
 	func asPyType() -> PythonType { .init(rawValue: id) ?? .other }
-	func asPySubscriptType() -> PythonSubscriptType { .init(rawValue: id)! }
+	func asPySubscriptType() -> PythonSubscriptType { .init(rawValue: id) ?? .other }
 	func anyTypeProtocol() -> any TypeProtocol {
 		let t = asPyType()
 		switch t {

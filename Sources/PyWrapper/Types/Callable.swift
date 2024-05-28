@@ -1,10 +1,10 @@
 
 import Foundation
-import PyAstParser
+import PyAst
 
 
 import Foundation
-import PyAstParser
+import PyAst
 
 //public protocol CollectionTypeProtocol {
 //	associatedtype Wrapped: TypeProtocol
@@ -120,5 +120,6 @@ public extension PyWrap {
 
 extension PyWrap.CallableType: CustomStringConvertible {
 	public var description: String { "\(Self.self)"}
+	public var string: String { "\(Self.self)" }
 }
 

@@ -1,5 +1,5 @@
 import Foundation
-import PyAstParser
+import PyAst
 
 
 public extension PyWrap {
@@ -18,6 +18,7 @@ public extension PyWrap {
 			self.ast = ast
 			self.wrapped = ast.id
 		}
+		public var string: String { wrapped }
 	}
 	
 }

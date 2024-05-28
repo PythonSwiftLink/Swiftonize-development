@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import PyAstParser
+import PyAst
 
 public protocol ClassProperty {
 	var prop_type: any TypeProtocol { get }
@@ -87,11 +87,16 @@ public extension PyWrap.Class {
 		public init(stmt: S) where S == AST.AnnAssign {
 			self.stmt = stmt
 			if let value = stmt.value {
-				fatalError()
+				let info = PropertyInfo(ast: value)
+				self.prop_type = info.type
+				self.property_type = info.setter ? .GetSet : .Getter
+			} else {
+				self.prop_type = PyWrap.fromAST(any_ast: stmt.annotation)
+				self.property_type = .GetSet
 			}
-			self.prop_type = PyWrap.fromAST(any_ast: stmt.annotation)
+			
 			self.name = (stmt.target as! AST.Name).id
-			self.property_type = .GetSet
+			
 			self.target_name = nil
 		}
 		
@@ -111,39 +116,55 @@ public extension PyWrap.Class {
 
 extension PyWrap.Class.Property {
 	struct PropertyInfo {
-		var setter: Bool
+		var readonly: Bool
+		var setter: Bool { !readonly }
 		var type: any TypeProtocol
-		var target: String? = nil
+		var alias: String?
+		var target: String? { alias }
+		
 		
 		init(ast: ExprProtocol) {
-			if let ast = ast as? AST.Call, let name = ast._func as? AST.Name, name.id.lowercased() == "property" {
-				setter = ast.keywords.contains(where: { kw in
-					if let key = kw.arg, key.lowercased() == "setter" {
+			if let ast = ast as? AST.Call, let name = ast._func as? AST.Name, name.id == "WrappedProperty" {
+				readonly = ast.keywords.reduce(into: false) { partialResult, next in
+					if let key = next.arg, key.lowercased() == "readonly" {
 						
-						if let value = kw.value as? AST.Constant {
+						if let value = next.value as? AST.Constant {
 							
 							let bool = value.boolValue
-							print(bool)
-							
-							return bool
+							//print(bool)
+							partialResult = bool
+							//return bool
 						}
 					}
-					return true
-				}) ?? true
+				}
+		
+//				readonly = ast.keywords.map( { kw in
+//					if let key = kw.arg, key.lowercased() == "readonly" {
+//						
+//						if let value = kw.value as? AST.Constant {
+//							
+//							let bool = value.boolValue
+//							//print(bool)
+//							
+//							return bool
+//						}
+//					}
+//					return true
+//				}).first ?? false
 				if let arg = ast.args.first {
 					type = PyWrap.fromAST(any_ast: ast.args.first!)
 				} else {
 					type = PyWrap.PyObjectType()
 				}
-				target = (ast.keywords.first(where: { kw in
-					if let key = kw.arg, key.lowercased() == "target" {
+				alias = (ast.keywords.first(where: { kw in
+					if let key = kw.arg, key.lowercased() == "alias" {
 						return true
 					}
 					return false
 				})?.value as? AST.Constant)?.value
 				
 			} else {
-				setter = true
+				readonly = false
 				type = PyWrap.PyObjectType()
 			}
 		}

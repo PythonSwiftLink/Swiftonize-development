@@ -1,5 +1,5 @@
 import Foundation
-import PyAstParser
+import PyAst
 
 
 public extension PyWrap {
@@ -14,7 +14,7 @@ public extension PyWrap {
 		
 		public var wrapped = T.self
 		
-		init(ast: PyAstParser.AST.Name, py_type: PythonType) {
+		init(ast: PyAst.AST.Name, py_type: PythonType) {
 			self.ast = ast
 			self.py_type = py_type
 			
@@ -24,10 +24,11 @@ public extension PyWrap {
 			self.py_type = type
 		}
 		
-		public static func fromAST(_ ast: PyAstParser.AST.Name, type: PythonType) -> any TypeProtocol {
+		public static func fromAST(_ ast: PyAst.AST.Name, type: PythonType) -> any TypeProtocol {
 			Self.init(ast: ast, py_type: type)
 		}
 		public var description: String { "\(T.self)" }
+		public var string: String { "\(T.self)" }
 	}
 	
 }

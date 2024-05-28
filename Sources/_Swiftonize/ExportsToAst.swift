@@ -1,6 +1,6 @@
 
 import Foundation
-import PyAstParser
+import PyAst
 import WrapContainers
 
 import PySwiftCore

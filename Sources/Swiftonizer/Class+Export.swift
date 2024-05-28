@@ -7,8 +7,17 @@ import SwiftSyntaxBuilder
 
 extension PyWrap.Class {
 	func codeBlock() throws -> CodeBlockItemListSyntax { try .init {
-		
-		try extensions().with(\.leadingTrivia, .newlines(2))
+		if options.generic_mode {
+//			for typevar in options.generic_typevar?.types ?? [] {
+//				genericPyTypeObject(target: typevar)
+//			}
+			baseTypeCode()
+			for ext in try generic_extensions() {
+				ext.with(\.leadingTrivia, .newlines(2))
+			}
+		} else {
+			try extensions().with(\.leadingTrivia, .newlines(2))
+		}
 		if let pyProtocol = pyProtocol {
 			pyProtocol
 		}
@@ -17,6 +26,9 @@ extension PyWrap.Class {
 	func extensions() throws -> ExtensionDeclSyntax {
 		let bases = bases()
 		return .init(extendedType: TypeSyntax(stringLiteral: name)) {
+			if let callbacks = callbacks, callbacks.count > 0 {
+				PyCallbacksGenerator(cls: callbacks).code.with(\.leadingTrivia, .newline)
+			}
 			tp_new()
 			tp_init()
 			tp_dealloc()
@@ -60,6 +72,8 @@ extension PyWrap.Class {
 		}
 		
 	}
+	
+	
 }
 
 
@@ -70,9 +84,30 @@ extension PyWrap.Class {
 
 fileprivate extension PyWrap.Class {
 	
+	fileprivate func baseTypeCode() -> CodeBlockItemListSyntax { .init {
+//		"""
+//		fileprivate var \(raw: name)_Mapping = {
+//			var mapping = PyMappingMethods()
+//			let mp_subscript: PySwift__mgetitem__ = {_, type in
+//				pyPrint(type!)
+//				return .None
+//			}
+//			mapping.mp_subscript = unsafeBitCast(mp_subscript, to: binaryfunc.self)
+//			return mapping
+//		}()
+//		"""
+		"fileprivate var \(raw: name)_BaseType = PyTypeObject.BaseType(name: \(literal: name))"
+		"fileprivate let \(raw: name)_PyType: UnsafeMutablePointer<PyTypeObject> = .init(&\(raw: name)_BaseType)"
+		"""
+		extension \(raw: name) {
+			static var BaseType: UnsafeMutablePointer<PyTypeObject> { \(raw: name)_PyType }
+		}
+		"""
+	}}
+	
 	fileprivate func pyTypeObject() -> VariableDeclSyntax {
 		return .init(
-			modifiers: [.init(name: .keyword(.fileprivate)), .init(name: .keyword(.static))], .var,
+			modifiers: [ .init(name: .keyword(.static))], .var,
 			name: .init(stringLiteral: "pyTypeObject"),
 			type: .init(type: TypeSyntax(stringLiteral: "PyTypeObject")),
 			initializer: .init(value: PyTypeObjectGenerator(cls: self).functionCallExpr() )
@@ -94,7 +129,7 @@ fileprivate extension PyWrap.Class {
 	fileprivate func tp_init() -> VariableDeclSyntax {
 		
 		return .init(
-			modifiers: [.init(name: .keyword(.fileprivate)), .init(name: .keyword(.static))], .var,
+			modifiers: [ .init(name: .keyword(.static))], .var,
 			name: .init(stringLiteral: "tp_init"),
 			type: .init(type: TypeSyntax(stringLiteral: "PySwift_initproc")),
 			initializer: .init(value: create_tp_init)
@@ -105,7 +140,8 @@ fileprivate extension PyWrap.Class {
 	
 	fileprivate func tp_new() -> VariableDeclSyntax {
 		return .init(
-			modifiers: [.init(name: .keyword(.fileprivate)), .init(name: .keyword(.static))], .var,
+			modifiers: [ .init(name: .keyword(.static))], .var,
+//			modifiers: [.init(name: .keyword(.fileprivate)), .init(name: .keyword(.static))], .var,
 			name: .init(stringLiteral: "tp_new"),
 			type: .init(type: TypeSyntax(stringLiteral: "PySwift_newfunc")),
 			initializer: .init(value: ExprSyntax(stringLiteral: """
@@ -116,30 +152,30 @@ fileprivate extension PyWrap.Class {
 		).with(\.leadingTrivia, .newlines(2)).with(\.trailingTrivia, .newlines(2))
 	}
 	
-	fileprivate func tp_dealloc() -> VariableDeclSyntax {
+	fileprivate func tp_dealloc(target: String? = nil) -> VariableDeclSyntax {
 		
 		return .init(
-			modifiers: [.init(name: .keyword(.fileprivate)), .init(name: .keyword(.static))], .var,
+			modifiers: [ .init(name: .keyword(.static))], .var,
 			name: .init(stringLiteral: "tp_dealloc"),
 			type: .init(type: TypeSyntax(stringLiteral: "PySwift_destructor")),
 			initializer: .init(value: ExprSyntax(stringLiteral: """
 			{ s in
 			if let ptr = s?.pointee.swift_ptr {
-			Unmanaged<\(name)>.fromOpaque(ptr).release()
+			Unmanaged<\(target ?? name)>.fromOpaque(ptr).release()
 			}
 			}
 			""")).with(\.trailingTrivia, .newlines(2))
 		)
 	}
 	
-	fileprivate func tp_str() -> VariableDeclSyntax {
+	fileprivate func tp_str(target: String? = nil) -> VariableDeclSyntax {
 		return .init(
-			modifiers: [.init(name: .keyword(.fileprivate)), .init(name: .keyword(.static))], .var,
+			modifiers: [ .init(name: .keyword(.static))], .var,
 			name: .init(stringLiteral: "tp_str"),
 			type: .init(type: TypeSyntax(stringLiteral: "PySwift_reprfunc")),
 			initializer: .init(value: ExprSyntax(stringLiteral: """
 	{ __self__ in
-	 return UnPackPySwiftObject(with: __self__, as: \(name).self).__str__().pyPointer
+	 return UnPackPySwiftObject(with: __self__, as: \(target ?? name).self).__str__().pyPointer
 	}
 	"""))//.with(\.trailingTrivia, .newlines(2))
 		)
@@ -147,7 +183,7 @@ fileprivate extension PyWrap.Class {
 	
 	fileprivate func tp_repr() -> VariableDeclSyntax {
 		return .init(
-			modifiers: [.init(name: .keyword(.fileprivate)), .init(name: .keyword(.static))], .var,
+			modifiers: [.init(name: .keyword(.static))], .var,
 			name: .init(stringLiteral: "tp_repr"),
 			type: .init(type: TypeSyntax(stringLiteral: "PySwift_reprfunc")),
 			initializer: .init(value: ExprSyntax(stringLiteral: """
@@ -158,6 +194,7 @@ fileprivate extension PyWrap.Class {
 		)
 	}
 	
+	
 	fileprivate func tp_hash() -> VariableDeclSyntax {
 		let expr = ExprSyntax(stringLiteral: """
 			{ __self__ in
@@ -166,12 +203,14 @@ fileprivate extension PyWrap.Class {
 			""").as(ClosureExprSyntax.self)!
 		
 		return .init(
-			modifiers: [.init(name: .keyword(.fileprivate)), .init(name: .keyword(.static))], .var,
+			modifiers: [ .init(name: .keyword(.static))], .var,
 			name: .init(stringLiteral: "tp_hash"),
 			type: .init(type: TypeSyntax(stringLiteral: "PySwift_hashfunc")),
 			initializer: .init(value: expr).with(\.trailingTrivia, .newlines(2))
 		)
 	}
+	
+	
 	
 	fileprivate var createPyClassExtension: FunctionDeclSyntax {
 		try! .init(

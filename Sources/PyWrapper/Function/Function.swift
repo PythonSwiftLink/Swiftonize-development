@@ -1,5 +1,5 @@
 import Foundation
-import PyAstParser
+import PyAst
 
 
 
@@ -31,6 +31,7 @@ public extension PyWrap {
 		
 		public var returns: (any TypeProtocol)?
 		
+		public var `static`: Bool
 		
 		public var call_target: String?
 		
@@ -94,7 +95,7 @@ public extension PyWrap {
 				print("return type: \(self.returns!)")
 			}
 //			print(self.args.map(\.type))
-			
+			self.static = ast.decorator_list.contains(name: "staticmethod")
 			  print("###########################################################\n")
 		}
 		

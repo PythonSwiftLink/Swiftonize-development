@@ -3,7 +3,7 @@ import SwiftSyntaxBuilder
 import SwiftSyntax
 
 import WrapContainers
-import PyAstParser
+import PyAst
 import PySwiftCore
 
 fileprivate extension String {

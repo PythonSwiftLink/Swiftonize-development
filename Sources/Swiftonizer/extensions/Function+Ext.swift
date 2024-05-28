@@ -19,6 +19,7 @@ extension PyWrap.Function {
 			if flag == .class_method || flag == .static_method {
 				"__type__"
 			}
+			if nargs == 0 { "_"}
 			if nargs > 0 { "__arg\(raw: nargs > 1 ? "s" : "")__" }
 			if nargs > 1 { "__nargs__" }
 			

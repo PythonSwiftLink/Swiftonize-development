@@ -38,7 +38,12 @@ struct PyGetSetProperty {
 			line += "?._pycall"
 		}
 		if property.prop_type is PyWrap.OptionalType || property.name == "py_callback" { line = "optionalPyPointer( \(line) )"}
-		else { line += ".pyPointer" }
+		
+		else {
+			if !(property.prop_type is PyWrap.PyObjectType) {
+				line += ".pyPointer"
+			}
+		}
 		return closure.with(\.statements, .init(itemsBuilder: {
 			ExprSyntax(stringLiteral: line)
 		}))
@@ -56,8 +61,13 @@ struct PyGetSetProperty {
 			return  "try UnPackOptionalPyPointer(with: \(arg_type)PyType.pytype, from: v, as: \(arg_type).self)"
 		case _ where name == "py_callback":
 			return "\(cls.name)PyCallback(callback: v)"
-		case _ as PyWrap.OptionalType:
+		case let opt as PyWrap.OptionalType:
+			if opt.wrapped.py_type == .other {
+				return  "try UnPackOptionalPyPointer(with: \(opt.wrapped.string).PyType, from: v, as: \(opt.wrapped.string).self)"
+			}
 			return "optionalPyCast(from: v)"
+		case let other as PyWrap.OtherType:
+			return  "try UnPackPyPointer(with: \(other.wrapped).PyType, from: v, as: \(other.wrapped).self)"
 		default:
 			return "try pyCast(from: v)"
 		}

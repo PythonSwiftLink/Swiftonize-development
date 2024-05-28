@@ -1,6 +1,6 @@
 
 import Foundation
-import PyAstParser
+import PyAst
 
 let ignoreFatals = true
 
@@ -11,6 +11,8 @@ public protocol TypeProtocol {
 	var ast: AstType? { get }
 	
 	var py_type: PythonType { get }
+	
+	var string: String { get }
 	
 	init(from ast: AstType, type: PythonType)
 }

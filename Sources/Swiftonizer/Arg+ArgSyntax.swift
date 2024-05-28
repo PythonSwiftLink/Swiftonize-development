@@ -53,6 +53,15 @@ extension LabeledExprSyntax {
 			expression: TryExprSyntax.unPackPyPointer(with: arg, many: many, type: arg.type.wrapped)  //as TryExprSyntax
 		)
 	}
+	static func pyUnpack(optional arg: PyWrap.OptionalArg, many: Bool) -> Self {
+		if arg.no_label {
+			return .init(expression: TryExprSyntax.unPackPyPointer(with: arg, many: many, type: arg.type.wrapped.string) )
+		}
+		return .init(
+			label: arg.name,
+			expression: TryExprSyntax.unPackPyPointer(with: arg, many: many, type: arg.type.wrapped.string)  //as TryExprSyntax
+		)
+	}
 }
 
 

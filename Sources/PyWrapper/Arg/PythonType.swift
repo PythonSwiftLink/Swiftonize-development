@@ -62,6 +62,7 @@ public enum PythonSubscriptType: String, CaseIterable, Codable {
 	case callable
 	case dict
 	case optional = "Optional"
+	case other
 }
 
 

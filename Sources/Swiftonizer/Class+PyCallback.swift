@@ -19,7 +19,8 @@ public struct PythonCall {
 	
 	
 	init(function: PyWrap.Function) {
-		fatalError()
+		self.function = function
+		self.cls = function.class
 	}
 	
 	
@@ -43,33 +44,30 @@ public struct PythonCall {
 	}
 	
 	var functionDecl: FunctionDeclSyntax {
-		var func_lines: [String] = []
-		
-		func_lines.append("var gil: PyGILState_STATE?")
-		func_lines.append("if PyGILState_Check() == 0 { gil = PyGILState_Ensure() }")
-		//func_lines.append(contentsOf: py_call_lines)
-		//func_lines.append(convert_result)
-		func_lines.append("Py_DecRef(\(name)_result)")
-		func_lines.append("if let gil = gil { PyGILState_Release(gil) }")
-		//func_lines.append(return_result)
+	
 		let signature = FunctionSignatureSyntax.init(parameterClause: .init(parameters: .init(itemsBuilder: {
 			
 		})))
-		return .init(name: .identifier(""), signature: signature) {
-			"var gil: PyGILState_STATE?"
-			"if PyGILState_Check() == 0 { gil = PyGILState_Ensure() }"
+		return .init(name: .identifier(name), signature: signature) {
+			//"var gil: PyGILState_STATE?"
+			//"if PyGILState_Check() == 0 { gil = PyGILState_Ensure() }"
+			DoStmtSyntax(
+				body: .init {
+					py_call
+				},
+				catchClauses: .init {
+					CatchClauseSyntax(stringLiteral: "catch let err as PythonError")
+				}
+			)
 			
-			
-			"Py_DecRef(\(raw: name)_result)"
-			"if let gil = gil { PyGILState_Release(gil) }"
+			//"Py_DecRef(\(raw: name)_result)"
+			//"if let gil = gil { PyGILState_Release(gil) }"
 		}
-		
-		//var code = withCodeLines(func_lines) as FunctionDeclSyntax
-		//code.modifiers.append(.init(name: .keyword(.public)))
-		//return code
-		
-		//.addModifier(.init(name: .public))
 	}
+	
+	private var py_call: CodeBlockItemListSyntax { .init {
+		"try PythonCallWithGil(call: _\(raw: function.name))"
+	}}
 	
 }
 
@@ -92,7 +90,7 @@ func createClassDecl(_ token: Keyword, name: String, type: TypeAnnotationSyntax,
 	return .init(
 		modifiers: .init {
 			if _private {
-				.init(name: .keyword(._private))
+				.init(name: .keyword(.private))
 			}
 		},
 		token,
@@ -126,9 +124,13 @@ public class PyCallbacksGenerator {
 				//IdentifierExpr(stringLiteral: "_pycall")
 				ExprSyntax(stringLiteral: "_pycall")
 				AssignmentExprSyntax()
-				FunctionCallExprSyntax(callee: MemberAccessExprSyntax(dot: .periodToken(), name: "init")) {
-					"ptr"._tuplePExprElement("callback")
-				}
+//				FunctionCallExprSyntax(callee: MemberAccessExprSyntax(dot: .periodToken(), name: "init")) {
+//					"ptr"._tuplePExprElement("callback")
+//				}
+				ExprSyntax(stringLiteral: "callback.xINCREF")
+//				FunctionCallExprSyntax(callee: MemberAccessExprSyntax(period: .periodToken(), name: .identifier("init"))) {
+//
+//				}
 			}
 		}
 	}
@@ -137,17 +139,18 @@ public class PyCallbacksGenerator {
 			.init {
 				ExprSyntax(stringLiteral: "_pycall")
 				AssignmentExprSyntax()
-				FunctionCallExprSyntax(callee: MemberAccessExprSyntax(dot: .periodToken(), name: "init")) {
-					"ptr"._tuplePExprElement("callback")
-					"keep_alive"._tuplePExprElement("true")
-				}
+//				FunctionCallExprSyntax(callee: MemberAccessExprSyntax(dot: .periodToken(), name: "init")) {
+//					"ptr"._tuplePExprElement("callback")
+//					"keep_alive"._tuplePExprElement("true")
+//				}
+				ExprSyntax(stringLiteral: "callback.xINCREF")
 			}
 		}
 	}
 	
 	var initializeCallbacks: CodeBlockItemListSyntax { .init {
 		let conditions = ConditionElementListSyntax {
-			ExprSyntax(stringLiteral: "PythonDict_Check(callback)")
+			ExprSyntax(stringLiteral: "PyDict_Check(callback)")
 		}
 		IfExprSyntax(
 			leadingTrivia: .newlines(2),
@@ -158,6 +161,7 @@ public class PyCallbacksGenerator {
 					cp.assignFromDict
 				}
 			},
+			elseKeyword: .keyword(.else),
 			elseBody: .init(CodeBlockSyntax {
 				assignCallbackKeep
 				for cp in cls.functions ?? [] {
@@ -197,16 +201,16 @@ public class PyCallbacksGenerator {
 	
 	var _deinit: DeinitializerDeclSyntax {
 		try! .init("deinit") {
-			
+			"Py_DecRef(_pycall)"
 		}
 	}
 	
 	public var code: ClassDeclSyntax {
 		let bases = cls.bases()
 		//guard let cls = cls else { fatalError() }
-		let new_callback = ( bases.count == 0)
+		let new_callback = true //( bases.count == 0)
 		let inher: TypeInheritanceClauseSyntax? = new_callback ? nil : .init {
-			for base in bases { base.rawValue.inheritedType }
+			//for base in bases { base.rawValue.inheritedType }
 			//for cp in cls.callback_protocols { cp.inheritedType }
 		}
 		let cls_title = cls.new_class ?  cls.name : "\(cls.name)PyCallback"
@@ -224,7 +228,8 @@ public class PyCallbacksGenerator {
 						.with(\.leadingTrivia, .newlines(2))
 					//.with(\.leadingTrivia, .newlines(2))
 					for f in cls.functions {
-						//CreateDeclMember(.var, name: "_\(f.name)", type: .pyPointer, _private: true)
+						CreateDeclMember(.var, name: "_\(f.name)", type: .init(type: TypeSyntax(stringLiteral: "PyPointer")), _private: true)
+						//CreateDeclMember(.var, name: <#T##String#>, type: <#T##TypeAnnotationSyntax#>)
 					}
 					
 					_init.with(\.leadingTrivia, .newlines(2))

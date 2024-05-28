@@ -4,6 +4,24 @@
 import PackageDescription
 import CompilerPluginSupport
 
+
+let local = false
+
+var dependencies: [Package.Dependency] = [
+	.package(url: "https://github.com/SwiftyJSON/SwiftyJSON", branch: "master"),
+	.package(url: "https://github.com/apple/swift-syntax", from: .init(509, 0, 0))
+]
+
+if local {
+	dependencies.append(contentsOf: [
+		.package(path: "../PyAst"),
+	])
+} else {
+	dependencies.append(contentsOf: [
+		.package(url: "https://github.com/PythonSwiftLink/PyAst", branch: "master"),
+	])
+}
+
 let package = Package(
     name: "Swiftonize",
     platforms: [.macOS(.v11), .iOS(.v13)],
@@ -15,19 +33,7 @@ let package = Package(
 		.library(name: "SwiftonizeNew", targets: ["Swiftonizer"]),
 		.library(name: "PyWrapper", targets: ["PyWrapper"])
     ],
-    dependencies: [
-
-		.package(url: "https://github.com/PythonSwiftLink/PyAst", branch: "master"),
-        //.package(path: "../PyAst"),
-        //.package(url: "https://github.com/PythonSwiftLink/PythonSwiftCore", branch: "main"),
-		//.package(url: "https://github.com/PythonSwiftLink/PythonSwiftLink-development", branch:"master"),
-		//.package(path: "../PythonSwiftLink-development"),
-        .package(url: "https://github.com/SwiftyJSON/SwiftyJSON", branch: "master"),
-        .package(url: "https://github.com/apple/swift-syntax", from: .init(509, 0, 0)),
-//        
-        //.package(path: "../PythonTestSuite")
-        //.package(url: "https://github.com/PythonSwiftLink/PythonTestSuite", branch: "master"),
-    ],
+    dependencies: dependencies,
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages this package depends on.

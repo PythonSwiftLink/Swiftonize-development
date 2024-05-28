@@ -10,10 +10,14 @@ class ObjectInitializer {
 	weak var _cls: PyWrap.Class?
 	var cls: PyWrap.Class { _cls! }
 	var args: [AnyArg] = []
+	var cls_name: String
 	
-	
-	init(_cls: PyWrap.Class? = nil) {
+	init(_cls: PyWrap.Class? = nil, generic_target: String? = nil) {
 		self._cls = _cls
+		if let __init__ = _cls!.functions?.first(where: { $0.name == "__init__" }) {
+			args = __init__.args
+		}
+		cls_name = generic_target ?? _cls?.name ?? ""
 	}
 }
 
@@ -37,7 +41,7 @@ extension ObjectInitializer {
 			}
 		} else {
 		"""
-		PyErr_SetString(PyExc_NotImplementedError,"\(raw: cls.name) can only be inited from swift")
+		PyErr_SetString(PyExc_NotImplementedError,"\(raw: cls_name) can only be inited from swift")
 		"""
 		"return -1"
 		}
@@ -81,7 +85,7 @@ extension ObjectInitializer {
 				if arg_count > 1 {
 					"""
 					switch err {
-					case .call: err.triggerError("\(raw: cls.name) __init__ Error")
+					case .call: err.triggerError("\(raw: cls_name) __init__ Error")
 					default: err.triggerError("hmmmmmm")
 					}
 					"""
@@ -176,7 +180,7 @@ extension ObjectInitializer {
 	}
 	
 	func initPySwiftTarget() -> FunctionCallExprSyntax {
-		let id = IdentifierExprSyntax(identifier: .identifier(cls.name))
+		let id = IdentifierExprSyntax(identifier: .identifier(cls_name))
 		
 		let tuple = TupleExprElementListSyntax {
 			//TupleExprElementSyntax(label: "with", expression: .init(IdentifierExprSyntax(stringLiteral: src)))
@@ -197,7 +201,7 @@ extension ObjectInitializer {
 	}
 	
 	func initPySwiftTargetThrows() -> TryExprSyntax {
-		let id = IdentifierExprSyntax(identifier: .identifier(cls.name))
+		let id = IdentifierExprSyntax(identifier: .identifier(cls_name))
 		
 		let tuple = TupleExprElementListSyntax {
 			//TupleExprElementSyntax(label: "with", expression: .init(IdentifierExprSyntax(stringLiteral: src)))

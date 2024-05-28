@@ -3,7 +3,7 @@ import SwiftSyntaxBuilder
 import SwiftSyntax
 
 import PyWrapper
-import PyAstParser
+import PyAst
 import SwiftParser
 
 
@@ -16,7 +16,7 @@ struct PyMethods {
 	let custom_title: String?
 	init(cls: PyWrap.Class? = nil, methods: [PyWrap.Function]? = nil, is_public: Bool = false, custom_title: String? = nil) {
 		self.cls = cls
-		self.methods = cls?.functions ?? methods ?? []
+		self.methods = cls?.functions?.filter({!$0.static}) ?? methods ?? []
 		self.is_public = is_public
 		self.custom_title = custom_title
 	}

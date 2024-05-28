@@ -1,0 +1,59 @@
+{
+  "pins" : [
+    {
+      "identity" : "pyast",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/PythonSwiftLink/PyAst",
+      "state" : {
+        "branch" : "master",
+        "revision" : "57e106986bd6e86bc62a00b8fba32e2d2c01f71a"
+      }
+    },
+    {
+      "identity" : "pycodable",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/PythonSwiftLink/PyCodable",
+      "state" : {
+        "branch" : "master",
+        "revision" : "18a5bd2640c858c1674af27ee8435dc6da288746"
+      }
+    },
+    {
+      "identity" : "pythoncore",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/PythonSwiftLink/PythonCore",
+      "state" : {
+        "revision" : "98d767de5b72e4d6505a47448e6f2cf9e506cfdf",
+        "version" : "311.0.3"
+      }
+    },
+    {
+      "identity" : "pythonswiftlink-development",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/PythonSwiftLink/PythonSwiftLink-development",
+      "state" : {
+        "branch" : "master",
+        "revision" : "ea41e2c4a16a72ade5c83aacca20beb8b22d61c0"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-syntax",
+      "state" : {
+        "revision" : "64889f0c732f210a935a0ad7cda38f77f876262d",
+        "version" : "509.1.1"
+      }
+    },
+    {
+      "identity" : "swiftyjson",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SwiftyJSON/SwiftyJSON",
+      "state" : {
+        "branch" : "master",
+        "revision" : "58391413ad113d98ea7f434354dceb8cb751b54e"
+      }
+    }
+  ],
+  "version" : 2
+}

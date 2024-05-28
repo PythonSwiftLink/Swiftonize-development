@@ -1,12 +1,12 @@
 
 import Foundation
-import PyAstParser
+import PyAst
 
 
 public extension PyWrap {
 	
 	struct VoidType<E: ExprProtocol>: TypeProtocol {
-		public static func fromAST(ast: PyAstParser.AST.Name, type: PythonType) -> PyWrap.PyObjectType {
+		public static func fromAST(ast: PyAst.AST.Name, type: PythonType) -> PyWrap.PyObjectType {
 			fatalError()
 		}
 		
@@ -35,6 +35,7 @@ public extension PyWrap {
 
 extension PyWrap.VoidType: CustomStringConvertible {
 	public var description: String { "Void" }
+	public var string: String { "Void" }
 }
 
 

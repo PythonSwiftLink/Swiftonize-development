@@ -1,10 +1,10 @@
 
 import Foundation
-import PyAstParser
+import PyAst
 
 
 import Foundation
-import PyAstParser
+import PyAst
 
 public protocol CollectionTypeProtocol: TypeProtocol {
 	associatedtype Wrapped: TypeProtocol
@@ -84,7 +84,7 @@ public extension PyWrap {
 //			self.ast = ast
 //			self.wrapped = wrapped
 //		}
-		
+		public var string: String { "[\(element.string)]" }
 	}
 	
 }

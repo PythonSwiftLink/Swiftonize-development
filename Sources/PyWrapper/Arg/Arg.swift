@@ -1,5 +1,5 @@
 import Foundation
-import PyAstParser
+import PyAst
 
 public protocol ArgProtocol {
 	associatedtype T: TypeProtocol
@@ -36,13 +36,13 @@ public extension PyWrap {
 	final class DataArg: ArgProtocol {
 		public var type: T
 		
-		public var ast: PyAstParser.AST.Arg
+		public var ast: PyAst.AST.Arg
 		
 		public var index: Int?
 		
 		public var options: [ArgOption] = []
 		
-		public init(ast: PyAstParser.AST.Arg, type: T) {
+		public init(ast: PyAst.AST.Arg, type: T) {
 			self.ast = ast
 			self.type = type
 		}

@@ -7,7 +7,7 @@
 
 import Foundation
 import PyWrapper
-import PyAstParser
+import PyAst
 
 extension PyWrap.Class {
 	
@@ -37,7 +37,7 @@ extension PyWrap.Class {
 
 extension PyWrap.Class.Callbacks {
 	func bases() -> [WrapClassBase] {
-		if let bases = cls?.ast.decorator_list.contains(where: { deco in
+		if let bases = cls?.ast?.decorator_list.contains(where: { deco in
 			if let call = deco as? AST.Call {
 				return (call._func as? AST.Name)?.id == "bases"
 			}

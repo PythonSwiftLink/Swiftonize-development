@@ -7,7 +7,7 @@
 
 import Foundation
 import SwiftyJSON
-import PyAstParser
+import PyAst
 import SwiftSyntax
 
 public enum ClassPropertyType: String, Codable, CaseIterable {

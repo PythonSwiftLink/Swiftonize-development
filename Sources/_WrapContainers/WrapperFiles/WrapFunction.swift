@@ -7,7 +7,7 @@
 
 import Foundation
 import PySwiftCore
-import PyAstParser
+import PyAst
 
 public enum WrapFunctionOption: String, CaseIterable,Codable {
     case list

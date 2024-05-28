@@ -13,12 +13,17 @@ extension PyWrap.Module {
 			"Foundation".import
 			"PySwiftCore".import
 			"PySwiftObject".import
+			"PythonCore".import
 			"PyUnpack".import
-			
+			"PyEncode".import
+			for imp in imports {
+				imp.import
+			}
 			for cls in classes {
 				try cls.codeBlock()
 			}
 			PyMethods(methods: functions, is_public: true, custom_title: "\(filename)PyMethods").output
+			createPyModuleDef
 			createPyInitExt
 		})
 		
@@ -40,8 +45,20 @@ extension PyWrap.Module {
 			}
 		}
 	}
+	
+	fileprivate func PyModule_AddType(target: String) -> FunctionCallExprSyntax {
+		
+		
+		return .init(callee: ExprSyntax(stringLiteral: "PyModule_AddType")) {
+			.init {
+				LabeledExprSyntax(expression: ExprSyntax(stringLiteral: "m"))
+				LabeledExprSyntax(expression: ExprSyntax(stringLiteral: "\(target)"))
+			}
+		}
+	}
+	
 	fileprivate var createPyModuleDef: VariableDeclSyntax {
-		.init(.var, name: "", type: .init(type:TypeSyntax(stringLiteral: "PyModuleDef")), initializer: .init(value: ExprSyntax(stringLiteral: """
+		.init(.var, name: "\(raw: self.filename)_module", type: .init(type:TypeSyntax(stringLiteral: "PyModuleDef")), initializer: .init(value: ExprSyntax(stringLiteral: """
 		.init(
 			m_base: _PyModuleDef_HEAD_INIT,
 			m_name: cString("\(filename)"),
@@ -78,8 +95,14 @@ extension PyWrap.Module {
 					OptionalBindingConditionSyntax(bindingSpecifier: .keyword(.let), pattern: pattern, initializer: initializer)
 				}
 				IfExprSyntax(conditions: con) {
-					for cls in classes {
+					for cls in classes.filter({!$0.options.generic_mode}) {
 						PyModule_AddType(ext: cls)
+					}
+					for cls in classes.filter(\.options.generic_mode) {
+						PyModule_AddType(target: "\(cls.name)_PyType")
+						for typevar in cls.options.generic_typevar?.types ?? [] {
+							PyModule_AddType(target: "\(cls.name)<\(typevar)>.PyType")
+						}
 					}
 					"return m"
 				}
