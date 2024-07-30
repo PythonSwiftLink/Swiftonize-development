@@ -25,14 +25,12 @@ extension PyWrap.Class {
 		public var functions: [PyWrap.Function]
 		public var bases: [ExprProtocol] { cls?.ast?.bases ?? [] }
 		public var count: Int { functions.count }
+		
 		public init(ast: AST.ClassDef, cls: PyWrap.Class) {
 			self.ast = ast
 			self.cls = cls
 			functions = convertAST2Function(ast.body, cls: cls) ?? []
 		}
-		
-		
-		
 		
 		public var name: String { cls?.name ?? "NoName"}
 		

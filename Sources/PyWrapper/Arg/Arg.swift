@@ -1,7 +1,7 @@
 import Foundation
 import PyAst
 
-public protocol ArgProtocol {
+public protocol ArgProtocol: AnyObject {
 	associatedtype T: TypeProtocol
 	
 	var type: T { get }

@@ -18,7 +18,10 @@ extension PyWrap.Class {
 		} else {
 			try extensions().with(\.leadingTrivia, .newlines(2))
 		}
-		if let pyProtocol = pyProtocol {
+		if new_class {
+			NewClassGenerator(cls: self).code.with(\.leadingTrivia, .newline)
+		}
+		if !new_class ,let pyProtocol = pyProtocol {
 			pyProtocol
 		}
 	}}
@@ -26,7 +29,7 @@ extension PyWrap.Class {
 	func extensions() throws -> ExtensionDeclSyntax {
 		let bases = bases()
 		return .init(extendedType: TypeSyntax(stringLiteral: name)) {
-			if let callbacks = callbacks, callbacks.count > 0 {
+			if !new_class, let callbacks = callbacks, callbacks.count > 0 {
 				PyCallbacksGenerator(cls: callbacks).code.with(\.leadingTrivia, .newline)
 			}
 			tp_new()
@@ -306,6 +309,10 @@ extension Array where Element == FunctionDeclSyntax {
 	}
 }
 
+fileprivate extension String {
+	
+}
+
 public extension PyWrap.Class {
 	
 	fileprivate func getBaseMethods() -> [FunctionDeclSyntax] {
@@ -345,7 +352,59 @@ public extension PyWrap.Class {
 		
 	}
 	
+	var protocolConformances: InheritanceClauseSyntax? {
+		let bases = bases()
+		if bases.isEmpty { return nil }
+		return .init {
+			for base in bases {
+				switch base {
+					//				case .NSObject:
+					//
+					//				case .SwiftBase:
+					//
+					//				case .SwiftObject:
+					//
+					//				case .Iterable:
+					//
+					//				case .Iterator:
+					//
+					//				case .Collection:
+					//
+				case .MutableMapping:
+					"PyMutableMappingProtocol".inheritanceType
+				case .Mapping:
+					"PyMappingProtocol".inheritanceType
+				case .Sequence, .MutableSequence:
+					"PySequenceProtocol".inheritanceType
+					
+				case .Buffer:
+					"PyBufferProtocol_AnyClass".inheritanceType
+				case .Bytes:
+					"PyBytesProtocol".inheritanceType
+				case .AsyncIterable:
+					"PyAsyncIterableProtocol".inheritanceType
+				case .AsyncIterator:
+					"PyAsyncIteratorProtocol".inheritanceType
+				case .AsyncGenerator:
+					"PyAsyncProtocol".inheritanceType
+				case .Number:
+					"PyNumberProtocol".inheritanceType
+				case .Str:
+					"PyStrProtocol".inheritanceType
+				case .Float:
+					"PyFloatProtocol".inheritanceType
+				case .Int:
+					"PyIntProtocol".inheritanceType
+				case .Hashable:
+					"PyHashable".inheritanceType
+				default: "".inheritanceType
+				}
+			}
+		}
+		
 	
+		
+	}
 	
 	var pyProtocol: ProtocolDeclSyntax? {
 		let bases = bases()
@@ -361,17 +420,23 @@ public extension PyWrap.Class {
 //		}
 		
 		let protocolList = MemberDeclListSyntax {
+			if let callbacks = callbacks {
+				"var py_callback: \(raw: name).PyCallback { get set }"
+			}
 			for f in functions ?? [] {
 				f.function_header
 			}
-			for base_method in getBaseMethods() {
-				base_method
-			}
+//			for base_method in getBaseMethods() {
+//				base_method
+//			}
 		}
+		let base_methods = getBaseMethods()
+		
 		let _protocol = ProtocolDeclSyntax(
 			modifiers: [.init(name: .keyword(.public))],
 			protocolKeyword: .keyword(.protocol),
-			name: .identifier("\(name)_PyProtocol")) {
+			name: .identifier("\(name)_PyProtocol"),
+			inheritanceClause: protocolConformances) {
 				protocolList
 			}
 		

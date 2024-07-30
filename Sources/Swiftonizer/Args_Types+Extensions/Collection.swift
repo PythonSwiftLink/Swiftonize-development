@@ -39,11 +39,12 @@ extension PyWrap.CollectionType: ArgTypeSyntax {
 	}
 	
 	public var typeSyntax: SwiftSyntax.TypeSyntax {
-		"\(raw: self.element as! CustomStringConvertible)"
+		//"\(raw: self.element as! CustomStringConvertible)"
+		.init(ArrayTypeSyntax(element: (element as! ArgTypeSyntax).typeSyntax))
 	}
 	
 	public var typeAnnotation: SwiftSyntax.TypeAnnotationSyntax {
-		.init(type: ArrayTypeSyntax(element: (element as! ArgTypeSyntax).typeSyntax))
+		.init(type: typeSyntax)
 	}
 	
 	public func callTupleElement(many: Bool, label: String?) -> SwiftSyntax.TupleExprElementSyntax {

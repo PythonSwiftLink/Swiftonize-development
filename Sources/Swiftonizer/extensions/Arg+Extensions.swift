@@ -105,7 +105,7 @@ extension AnyArg {
 		}
 		if no_label {
 			return .init(
-				firstName: .identifier("_ "),
+				firstName: .identifier("_"),
 				secondName: .identifier(name),
 				colon: .colonToken(),
 				type: _typeSyntax

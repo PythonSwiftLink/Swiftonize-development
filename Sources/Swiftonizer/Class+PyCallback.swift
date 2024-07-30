@@ -45,9 +45,10 @@ public struct PythonCall {
 	
 	var functionDecl: FunctionDeclSyntax {
 	
-		let signature = FunctionSignatureSyntax.init(parameterClause: .init(parameters: .init(itemsBuilder: {
-			
-		})))
+		var signature = FunctionSignatureSyntax.init(parameterClause: .init(parameters: function.args.parameterList))
+		if let returns = function.returns as? ArgTypeSyntax {
+			signature.returnClause = .init(type: returns.typeSyntax)
+		}
 		return .init(name: .identifier(name), signature: signature) {
 			//"var gil: PyGILState_STATE?"
 			//"if PyGILState_Check() == 0 { gil = PyGILState_Ensure() }"
@@ -56,17 +57,26 @@ public struct PythonCall {
 					py_call
 				},
 				catchClauses: .init {
-					CatchClauseSyntax(stringLiteral: "catch let err as PythonError")
+					//CatchClauseSyntax(stringLiteral: "catch let err as PythonError {\n// python errors\n}")
+					"catch let err as PythonError {\n// python errors\n}"
+					"catch {\n// other errors\n}"
 				}
 			)
-			
+			if function.returns != nil {
+				"fatalError()"
+			}
 			//"Py_DecRef(\(raw: name)_result)"
 			//"if let gil = gil { PyGILState_Release(gil) }"
 		}
 	}
 	
 	private var py_call: CodeBlockItemListSyntax { .init {
-		"try PythonCallWithGil(call: _\(raw: function.name))"
+		let returns = function.returns == nil ? "" : "return "
+		if function.args.isEmpty {
+			"\(raw: returns)try PythonCallWithGil(call: _\(raw: function.name))"
+		} else {
+			"\(raw: returns)try PythonCallWithGil(call: _\(raw: function.name), \(raw: function.args.map(\.name).joined(separator: ", ")))"
+		}
 	}}
 	
 }
@@ -213,7 +223,8 @@ public class PyCallbacksGenerator {
 			//for base in bases { base.rawValue.inheritedType }
 			//for cp in cls.callback_protocols { cp.inheritedType }
 		}
-		let cls_title = cls.new_class ?  cls.name : "\(cls.name)PyCallback"
+//		let cls_title = cls.new_class ?  cls.name : "\(cls.name)PyCallback"
+		let cls_title = cls.new_class ?  cls.name : "PyCallback"
 		let cls_dect = ClassDeclSyntax(
 			
 			//modifiers: [.init(name: .publictok)],

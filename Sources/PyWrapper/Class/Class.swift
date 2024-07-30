@@ -128,15 +128,18 @@ public extension PyWrap {
 									return nil
 								}
 								for kw in kws {
-									switch kw.0 {
-									case "target":
-										options.target = kw.1
-									case "py_init":
+									switch InitArguments(rawValue: kw.0) {
+									case .py_init:
 										options.py_init = kw.1 == "True" ? true : false
-									case "unretained":
+									case .target:
+										options.target = kw.1
+									case .unretained:
 										options.unretained = kw.1 == "True" ? true : false
-									default: break
+									case .new:
+										new_class = true
+									case .none: break
 									}
+									
 								}
 								for (i, arg) in call.args.enumerated() {
 									switch i {
@@ -202,6 +205,15 @@ public extension PyWrap {
 
 
 public extension PyWrap.Class {
+	
+	enum InitArguments: String {
+		case target
+		case py_init
+		case unretained
+		case new
+		
+	}
+	
 	var name: String { options.target ?? ast?.name ?? "NULL"}
 	
 	var init_func: PyWrap.Function? {
